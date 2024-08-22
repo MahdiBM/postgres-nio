@@ -9,14 +9,18 @@ public struct PostgresRowSequence: AsyncSequence, Sendable {
 
     typealias BackingSequence = NIOThrowingAsyncSequenceProducer<DataRow, Error, AdaptiveRowBuffer, PSQLRowStream>
 
-    let backing: BackingSequence
-    let lookupTable: [String: Int]
-    let columns: [RowDescription.Column]
+    private let backing: BackingSequence
+    private let stream: PSQLRowStream
+    var lookupTable: [String: Int] {
+        self.stream.lookupTable
+    }
+    var columns: [RowDescription.Column] {
+        self.stream.rowDescription
+    }
 
-    init(_ backing: BackingSequence, lookupTable: [String: Int], columns: [RowDescription.Column]) {
+    init(_ backing: BackingSequence, stream: PSQLRowStream) {
         self.backing = backing
-        self.lookupTable = lookupTable
-        self.columns = columns
+        self.stream = stream
     }
 
     public func makeAsyncIterator() -> AsyncIterator {
@@ -66,6 +70,12 @@ extension PostgresRowSequence {
             result.append(row)
         }
         return result
+    }
+
+    public func collectWithMetadata() async throws -> (metadata: PostgresQueryMetadata?, rows: [PostgresRow]) {
+        let rows = try await self.collect()
+        let metadata = PostgresQueryMetadata(string: self.stream.commandTag)
+        return (metadata, rows)
     }
 }
 
