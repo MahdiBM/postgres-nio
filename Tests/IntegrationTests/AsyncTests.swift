@@ -63,9 +63,9 @@ final class AsyncPostgresConnectionTests: XCTestCase {
                 XCTAssertEqual(element, counter + 1)
                 counter += 1
             }
-            XCTAssertEqual(metadata?.command, "SELECT")
-            XCTAssertEqual(metadata?.oid, nil)
-            XCTAssertEqual(metadata?.rows, 10000)
+            XCTAssertEqual(metadata.command, "SELECT")
+            XCTAssertEqual(metadata.oid, nil)
+            XCTAssertEqual(metadata.rows, 10000)
 
             XCTAssertEqual(counter, end)
         }
@@ -268,7 +268,7 @@ final class AsyncPostgresConnectionTests: XCTestCase {
             )
             let result = try await connection.query(insertionQuery, logger: .psqlTest)
             let metadata = try await result.collectWithMetadata().metadata
-            XCTAssertEqual(metadata?.rows, rowsCount)
+            XCTAssertEqual(metadata.rows, rowsCount)
 
             let dropQuery = PostgresQuery(unsafeSQL: "DROP TABLE table1")
             try await connection.query(dropQuery, logger: .psqlTest)

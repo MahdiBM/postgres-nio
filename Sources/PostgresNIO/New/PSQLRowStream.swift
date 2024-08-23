@@ -114,7 +114,7 @@ final class PSQLRowStream: @unchecked Sendable {
             self.downstreamState = .consumed(.failure(error))
         }
         
-        return PostgresRowSequence(producer.sequence, stream: self)
+        return PostgresRowSequence(producer.sequence, rowStream: self)
     }
     
     func demand() {
