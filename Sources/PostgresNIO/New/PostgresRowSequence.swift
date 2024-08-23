@@ -85,6 +85,14 @@ extension PostgresRowSequence {
     }
 
     /// Consumes all rows and returns the query metadata.
+    ///
+    /// If you don't need the query metadata, just use the for-try-await-loop syntax:
+    /// ```swift
+    /// for try await row in myPostgresSequence {
+    ///     /// Process each row
+    /// }
+    /// ```
+    ///
     /// - Parameter onRow: Processes each row.
     /// - Returns: The query metadata.
     public func consume(

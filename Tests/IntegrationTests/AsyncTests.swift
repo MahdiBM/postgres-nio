@@ -1,3 +1,4 @@
+import Atomics
 import Logging
 import XCTest
 import PostgresNIO
@@ -46,6 +47,32 @@ final class AsyncPostgresConnectionTests: XCTestCase {
         }
     }
 
+    func testSelect10kRowsAndConsume() async throws {
+        let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        defer { XCTAssertNoThrow(try eventLoopGroup.syncShutdownGracefully()) }
+        let eventLoop = eventLoopGroup.next()
+
+        let start = 1
+        let end = 10000
+
+        try await withTestConnection(on: eventLoop) { connection in
+            let rows = try await connection.query("SELECT generate_series(\(start), \(end));", logger: .psqlTest)
+
+            let counter = ManagedAtomic(0)
+            let metadata = try await rows.consume { row in
+                let element = try row.decode(Int.self)
+                let newCounter = counter.wrappingIncrementThenLoad(ordering: .relaxed)
+                XCTAssertEqual(element, newCounter)
+            }
+
+            XCTAssertEqual(metadata.command, "SELECT")
+            XCTAssertEqual(metadata.oid, nil)
+            XCTAssertEqual(metadata.rows, 10000)
+
+            XCTAssertEqual(counter.load(ordering: .relaxed), end)
+        }
+    }
+
     func testSelect10kRowsAndCollect() async throws {
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         defer { XCTAssertNoThrow(try eventLoopGroup.syncShutdownGracefully()) }
@@ -63,6 +90,7 @@ final class AsyncPostgresConnectionTests: XCTestCase {
                 XCTAssertEqual(element, counter + 1)
                 counter += 1
             }
+
             XCTAssertEqual(metadata.command, "SELECT")
             XCTAssertEqual(metadata.oid, nil)
             XCTAssertEqual(metadata.rows, 10000)
