@@ -64,6 +64,8 @@ extension PostgresRowSequence {
 extension PostgresRowSequence.AsyncIterator: Sendable {}
 
 extension PostgresRowSequence {
+    /// Collect and return all rows.
+    /// - Returns: The rows.
     public func collect() async throws -> [PostgresRow] {
         var result = [PostgresRow]()
         for try await row in self {
@@ -72,12 +74,29 @@ extension PostgresRowSequence {
         return result
     }
 
+    /// Collect and return all rows, alongside the query metadata.
+    /// - Returns: The query metadata and the rows.
     public func collectWithMetadata() async throws -> (metadata: PostgresQueryMetadata, rows: [PostgresRow]) {
         let rows = try await self.collect()
         guard let metadata = PostgresQueryMetadata(string: self.rowStream.commandTag) else {
             throw PSQLError.invalidCommandTag(self.rowStream.commandTag)
         }
         return (metadata, rows)
+    }
+
+    /// Consumes all rows and returns the query metadata.
+    /// - Parameter onRow: Processes each row.
+    /// - Returns: The query metadata.
+    public func consume(
+        onRow: @Sendable (PostgresRow) throws -> ()
+    ) async throws -> PostgresQueryMetadata {
+        for try await row in self {
+            try onRow(row)
+        }
+        guard let metadata = PostgresQueryMetadata(string: self.rowStream.commandTag) else {
+            throw PSQLError.invalidCommandTag(self.rowStream.commandTag)
+        }
+        return metadata
     }
 }
 
