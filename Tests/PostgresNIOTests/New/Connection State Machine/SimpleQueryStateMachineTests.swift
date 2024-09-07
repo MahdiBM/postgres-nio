@@ -15,7 +15,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "DELETE FROM table WHERE id=1"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
         XCTAssertEqual(state.commandCompletedReceived("DELETE 1"), .succeedQuery(promise, with: .init(value: .noRows(.tag("DELETE 1")), logger: logger)))
         XCTAssertEqual(state.readyForQueryReceived(.idle), .fireEventReadyForQuery)
     }
@@ -30,7 +30,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT * FROM pg_class WHERE oid = \(nonExistentOID)"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         let input: [RowDescription.Column] = [
             .init(name: "version", tableOID: 0, columnAttributeNumber: 0, dataType: .text, dataTypeSize: -1, dataTypeModifier: -1, format: .text)
@@ -49,7 +49,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT version()"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         // We need to ensure that even though the row description from the wire says that we
         // will receive data in `.text` format, we will actually receive it in binary format,
@@ -97,7 +97,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "-- some comments"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
         XCTAssertEqual(state.emptyQueryResponseReceived(), .succeedQuery(promise, with: .init(value: .noRows(.emptyResponse), logger: logger)))
         XCTAssertEqual(state.readyForQueryReceived(.idle), .fireEventReadyForQuery)
     }
@@ -112,7 +112,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT * FROM pg_class WHERE oid = \(nonExistentOID)"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         let input: [RowDescription.Column] = [
             .init(name: "version", tableOID: 0, columnAttributeNumber: 0, dataType: .text, dataTypeSize: -1, dataTypeModifier: -1, format: .text)
@@ -133,7 +133,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT version()"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         XCTAssertEqual(state.cancelQueryStream(), .failQuery(promise, with: .queryCancelled, cleanupContext: nil))
 
@@ -151,7 +151,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT version()"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         // We need to ensure that even though the row description from the wire says that we
         // will receive data in `.text` format, we will actually receive it in binary format,
@@ -188,7 +188,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT version()"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         // We need to ensure that even though the row description from the wire says that we
         // will receive data in `.text` format, we will actually receive it in binary format,
@@ -228,7 +228,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT version()"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         // We need to ensure that even though the row description from the wire says that we
         // will receive data in `.text` format, we will actually receive it in binary format,
@@ -280,7 +280,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT version()"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
 
         let serverError = PostgresBackendMessage.ErrorResponse(fields: [.severity: "Error", .sqlState: "123"])
         XCTAssertEqual(
@@ -299,7 +299,7 @@ class SimpleQueryStateMachineTests: XCTestCase {
         let query = "SELECT version()"
         let queryContext = SimpleQueryContext(query: query, logger: logger, promise: promise)
 
-        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext)), .sendQuery(query))
+        XCTAssertEqual(state.enqueue(task: .simpleQuery(queryContext, writePromise: nil)), .sendQuery(query, promise: nil))
         XCTAssertEqual(state.cancelQueryStream(), .failQuery(promise, with: .queryCancelled, cleanupContext: .none))
 
         let serverError = PostgresBackendMessage.ErrorResponse(fields: [.severity: "Error", .sqlState: "123"])

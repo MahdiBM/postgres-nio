@@ -20,7 +20,7 @@ struct SimpleQueryStateMachine {
     }
 
     enum Action {
-        case sendQuery(String)
+        case sendQuery(String, promise: EventLoopPromise<Void>?)
 
         // --- general actions
         case failQuery(EventLoopPromise<PSQLRowStream>, with: PSQLError)
@@ -46,14 +46,14 @@ struct SimpleQueryStateMachine {
         self.state = .initialized(queryContext)
     }
 
-    mutating func start() -> Action {
+    mutating func start(_ promise: EventLoopPromise<Void>?) -> Action {
         guard case .initialized(let queryContext) = self.state else {
             preconditionFailure("Start should only be called, if the query has been initialized")
         }
 
         return self.avoidingStateMachineCoW { state -> Action in
             state = .messagesSent(queryContext)
-            return .sendQuery(queryContext.query)
+            return .sendQuery(queryContext.query, promise: promise)
         }
     }
 
