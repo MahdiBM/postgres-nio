@@ -1,5 +1,7 @@
 .DS_Store
 /.build
+# sourcekit-lsp's equivalent of '.build'. Will be merged with '.build' in Swift 6.1.
+/.index-build
 /Packages
 /*.xcodeproj
 DerivedData
